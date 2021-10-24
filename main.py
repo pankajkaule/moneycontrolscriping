@@ -1,36 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-
-
-# url = 'https://www.moneycontrol.com/stocks/marketstats/nse-gainer/all-companies_-2/'
-# soup = BeautifulSoup(requests.get(url).content, 'html.parser').text
-
-
-# allCompanies = soup.findall('div', class_='bsr_table hist_tbl_hm')
-# all_data = []
-# for tr in soup.select('.bsr_table hist_tbl_hm'):
-#     print(tr)
-#     tds = [td.get_text(strip=True) for td in tr.select('td')]
-#     all_data.append(tds)
-
-# # print on screen
-# print('{:<15}{:<15}{:<15}{:<15}{:<15}'.format(
-#     'Date', 'Open', 'High', 'Low', 'Close'))
-# for row in all_data:
-#     print('{:<15}{:<15}{:<15}{:<15}{:<15}'.format(*row))
-
-
-# import requests
-# from bs4 import BeautifulSoup
-# url = "https://www.moneycontrol.com/stocks/marketstats/nse-gainer/all-companies_-2/"
-
-# r = requests.get(url)
-# soup = BeautifulSoup(r.content, 'html.parser')
-# datatable = soup.find_all(class_="bsr_table hist_tbl_hm")
-
-
-# print(datatable)  # to print html in tree structure
-
+import csv
+from datetime import date
 
 data = requests.get(
     'https://www.moneycontrol.com/stocks/marketstats/bsemact1/index.php').text
@@ -50,7 +21,7 @@ allCompanies = soup.find_all('span', class_='gld13 disin')
 companyNames = []
 for row in allCompanies:
     link = row.find('a').text
-    companyNames.append(link)
+    companyNames.append(str(link))
 
 # print(companyNames)
 
@@ -60,6 +31,7 @@ companyHigh = []
 companyLow = []
 companyClose = []
 companyChange = []
+companyGain = []
 for tr in tablerow:
 
     # high price
@@ -73,48 +45,55 @@ for tr in tablerow:
 # print(companyHigh)
 #         # low price
     low = tr.find_all('td', attrs={'width': 80, 'align': 'right'})
+    flag = True
     for i in low:
         i = i.text.replace(',', '')
-        print(i)
-        companyLow.append(float(i))
+        if flag == True:
+            companyLow.append(float(i))
+            flag = False
+        else:
 
-#         # close price
+            companyClose.append(float(i))
+            flag = True
 
-    close = tr.find_all('td', attrs={'width': 85, 'align': 'right'})
-
-    # print(close)
-    for i in close:
-        i = i.text.replace(',', '')
-        companyClose.append(i)
-
-    change = tr.find_all('td', attrs={'width': 80, 'align': 'right'})
-    # print(change)
-
+    change = tr.find_all('td', attrs={'width': 45, 'align': 'right'})
+    percentchangeandgainflag = True
     for i in change:
         if i.has_attr('class'):
-            companyChange.append(float(i.text))
+            if percentchangeandgainflag == True:
+                companyChange.append(float(i.text))
+                percentchangeandgainflag = False
+            else:
+                companyGain.append(float(i.text))
+                percentchangeandgainflag = True
+
 
 companyData = []
+
+
+# print(companyNames)
+# print(companyHigh)
+# print(companyLow)
 # print(companyChange)
-# print(len(companyClose))
-# print(len(companyHigh))
-print(len(companyLow))
-# print(len(companyClose))
-# print(len(companyChange))
+# print(companyGain)
 
 
-# for i in range(len(companyNames)):
-#     companyData.append({
-#         'company': companyNames[i],
-#         'high': companyHigh[i],
-#         'low': companyLow[i],
-#         'change_in_per': companyChange[i],
-#         'close': companyClose[i]
-#     })
+for i in range(len(companyNames)):
+    companyData.append({
+        'company': companyNames[i],
+        'high': companyHigh[i],
+        'low': companyLow[i],
+        'change_in_per': companyChange[i],
+        'gain': companyGain[i]
+    })
 
-# print(companyData)
-# new_dict = sorted(
+today = date.today()
 
-#     companyData, key=lambda i: i['change_in_per'], reverse=True
-# )
-# print(new_dict)
+filename = today.strftime("%b-%d-%Y")
+
+fields = ['company', 'high', 'low', 'change_in_per', 'gain']
+filename = filename+".csv"
+with open(filename, 'w') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(companyData)
