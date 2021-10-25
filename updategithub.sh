@@ -1,4 +1,5 @@
 #!/bin/sh
+python main.py
 
 git add .
 
