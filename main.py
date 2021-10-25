@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
-from datetime import date
+from datetime import datetime
 
 data = requests.get(
     'https://www.moneycontrol.com/stocks/marketstats/bsemact1/index.php').text
@@ -86,10 +86,8 @@ for i in range(len(companyNames)):
         'change_in_per': companyChange[i],
         'gain': companyGain[i]
     })
-
-today = date.today()
-
-filename = today.strftime("%b-%d-%Y")
+now = datetime.now()
+filename = now.strftime("%d-%m-%Y-%H:%M:%S")
 
 fields = ['company', 'high', 'low', 'change_in_per', 'gain']
 filename = filename+".csv"
